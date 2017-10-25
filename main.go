@@ -8,17 +8,20 @@ import (
 )
 
 var errorLocations = make(map[int]struct{})
+var currentBefore func()
 const colorRed = "\x1b[31;1m"
 const colorGreen = "\x1b[32;1m"
 const colorNormal = "\x1b[0m"
 
-func describe(description string, describeFunction func()) {
-  fmt.Println(description)
-  describeFunction()
-  fmt.Print("\n")
+func before(beforeFunction func()) {
+  currentBefore = beforeFunction
 }
 
 func it(description string, itFunction func()) {
+  if currentBefore != nil {
+    currentBefore()
+  }
+
   itFunction()
   _, _, line, _ := runtime.Caller(1)
 
@@ -55,6 +58,6 @@ func idLove (t *testing.T) func(interface{}, string, interface{}) {
   }
 }
 
-func Init(t *testing.T) (func(interface {}, string, interface {}), func(string, func()), func(string, func())) {
-  return idLove(t), describe, it
+func Init(t *testing.T) (func(interface {}, string, interface {}), func(string, func()), func(func())) {
+  return idLove(t), it, before
 }
